@@ -149,4 +149,36 @@ public:
     static void reclaim(iep_interface *iep_inf);
 };
 
+/// for dlopen 
+iep_interface* iep_interface_create_new();
+void iep_interface_reclaim(iep_interface *iep_inf);
+
+/// for "C"
+struct iep_ops {
+    void* (*claim)();
+    int (*init)(void *iep_obj, iep_img *src, iep_img *dst);
+    int (*config_src_dst)(void *iep_obj, iep_img *src, iep_img *dst);
+    int (*config_yuv_enh)(void *iep_obj);
+    int (*config_yuv_enh_param)(void *iep_obj, iep_param_YUV_color_enhance_t *yuv_enh);
+    int (*config_color_enh)(void *iep_obj);
+    int (*config_color_enh_param)(void *iep_obj, iep_param_RGB_color_enhance_t *rgb_enh);
+    int (*config_scale)(void *iep_obj);
+    int (*config_scale_param)(void *iep_obj, iep_param_scale_t *scale);
+    int (*config_yuv_denoise)(void *iep_obj);
+    int (*config_yuv_deinterlace)(void *iep_obj);
+    int (*config_yuv_deinterlace_param1)(void *iep_obj, iep_param_yuv_deinterlace_t *yuv_dil);
+    int (*config_yuv_dil_src_dst)(void *iep_obj, iep_img *src1, iep_img *dst1);
+    int (*config_yuv_deinterlace_param2)(void *iep_obj, iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1);
+    int (*config_color_space_convertion)(void *iep_obj);
+    int (*config_color_space_convertion_param)(void *iep_obj, iep_param_color_space_convertion_t *clr_convert);
+    int (*config_direct_lcdc_path)(void *iep_obj, iep_param_direct_path_interface_t *dpi);
+    int (*run_sync)(void *iep_obj);
+    int (*run_async)(void *iep_obj, iep_notify notify);
+    int (*poll)(void *iep_obj);
+    void (*reclaim)(void *iep_obj);
+};
+
+struct iep_ops* alloc_iep_ops();
+void free_iep_ops(struct iep_ops *ops);
+
 #endif

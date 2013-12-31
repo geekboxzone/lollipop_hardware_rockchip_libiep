@@ -219,7 +219,7 @@ int iep_api::config_yuv_enh(iep_param_YUV_color_enhance_t *yuv_enh)
 
 int iep_api::config_color_enh()
 {
-    int i;
+    //int i;
 
     msg->rgb_color_enhance_en = 1;
 
@@ -1013,6 +1013,230 @@ void iep_interface::reclaim(iep_interface *iep_inf)
     if (iep_inf) {
         delete iep_inf;
         iep_inf = NULL;
+    }
+}
+
+iep_interface* iep_interface_create_new()
+{
+    return iep_interface::create_new();
+}
+
+void iep_interface_reclaim(iep_interface *iep_inf)
+{
+    iep_interface::reclaim(iep_inf);
+}
+
+extern "C"
+void* iep_ops_claim()
+{
+    return iep_interface::create_new();
+}
+
+extern "C"
+int iep_ops_init(void *iep_obj, iep_img *src, iep_img *dst)
+{
+    return ((iep_interface*)iep_obj)->init(src, dst);
+}
+
+extern "C"
+int iep_ops_init_discrete(void *iep_obj, 
+                          int src_act_w, int src_act_h, 
+                          int src_x_off, int src_y_off,
+                          int src_vir_w, int src_vir_h, 
+                          int src_format, 
+                          int src_mem_addr, int src_uv_addr, int src_v_addr,
+                          int dst_act_w, int dst_act_h, 
+                          int dst_x_off, int dst_y_off,
+                          int dst_vir_w, int dst_vir_h, 
+                          int dst_format, 
+                          int dst_mem_addr, int dst_uv_addr, int dst_v_addr)
+{
+    iep_img src;
+    iep_img dst;
+
+    src.act_w    = src_act_w;
+    src.act_h    = src_act_h;
+    src.x_off    = src_x_off;
+    src.y_off    = src_y_off;
+    src.vir_w    = src_vir_w;
+    src.vir_h    = src_vir_h;
+    src.format   = src_format;
+    src.mem_addr = (uint32_t*)src_mem_addr;
+    src.uv_addr  = (uint32_t*)src_uv_addr;
+    src.v_addr   = (uint32_t*)src_v_addr;
+
+    dst.act_w    = dst_act_w;
+    dst.act_h    = dst_act_h;
+    dst.x_off    = dst_x_off;
+    dst.y_off    = dst_y_off;
+    dst.vir_w    = dst_vir_w;
+    dst.vir_h    = dst_vir_h;
+    dst.format   = dst_format;
+    dst.mem_addr = (uint32_t*)dst_mem_addr;
+    dst.uv_addr  = (uint32_t*)dst_uv_addr;
+    dst.v_addr   = (uint32_t*)dst_v_addr;
+
+    return ((iep_interface*)iep_obj)->init(&src, &dst);
+}
+
+extern "C"
+int iep_ops_config_src_dst(void *iep_obj, iep_img *src, iep_img *dst)
+{
+    return ((iep_interface*)iep_obj)->config_src_dst(src, dst);
+}
+
+extern "C"
+int iep_ops_config_yuv_enh(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_enh();
+}
+
+extern "C"
+int iep_ops_config_yuv_enh_param(void *iep_obj, iep_param_YUV_color_enhance_t *yuv_enh)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_enh(yuv_enh);
+}
+
+extern "C"
+int iep_ops_config_color_enh(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_color_enh();
+}
+
+extern "C"
+int iep_ops_config_color_enh_param(void *iep_obj, iep_param_RGB_color_enhance_t *rgb_enh)
+{
+    return ((iep_interface*)iep_obj)->config_color_enh(rgb_enh);
+}
+
+extern "C"
+int iep_ops_config_scale(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_scale();
+}
+
+extern "C"
+int iep_ops_config_scale_param(void *iep_obj, iep_param_scale_t *scale)
+{
+    return ((iep_interface*)iep_obj)->config_scale(scale);
+}
+
+extern "C"
+int iep_ops_config_yuv_denoise(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_denoise();
+}
+
+extern "C"
+int iep_ops_config_yuv_deinterlace(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_deinterlace();
+}
+
+extern "C"
+int iep_ops_config_yuv_deinterlace_param1(void *iep_obj, iep_param_yuv_deinterlace_t *yuv_dil)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_deinterlace(yuv_dil);
+}
+
+extern "C"
+int iep_ops_config_yuv_dil_src_dst(void *iep_obj, iep_img *src1, iep_img *dst1)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_dil_src_dst(src1, dst1);
+}
+
+extern "C"
+int iep_ops_config_yuv_deinterlace_param2(void *iep_obj, iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1)
+{
+    return ((iep_interface*)iep_obj)->config_yuv_deinterlace(yuv_dil, src1, dst1);
+}
+
+extern "C"
+int iep_ops_config_color_space_convertion(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->config_color_space_convertion();
+}
+
+extern "C"
+int iep_ops_config_color_space_convertion_param(void *iep_obj, iep_param_color_space_convertion_t *clr_convert)
+{
+    return ((iep_interface*)iep_obj)->config_color_space_convertion(clr_convert);
+}
+
+extern "C"
+int iep_ops_config_direct_lcdc_path(void *iep_obj, iep_param_direct_path_interface_t *dpi)
+{
+    return ((iep_interface*)iep_obj)->config_direct_lcdc_path(dpi);
+}
+
+extern "C"
+int iep_ops_run_sync(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->run_sync();
+}
+
+extern "C"
+int iep_ops_run_async_ncb(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->run_async(NULL);
+}
+
+extern "C"
+int iep_ops_run_async(void *iep_obj, iep_notify notify)
+{
+    return ((iep_interface*)iep_obj)->run_async(notify);
+}
+
+extern "C"
+int iep_ops_poll(void *iep_obj)
+{
+    return ((iep_interface*)iep_obj)->poll();
+}
+
+extern "C"
+void iep_ops_reclaim(void *iep_obj)
+{
+    iep_interface::reclaim((iep_interface*)iep_obj);
+}
+
+struct iep_ops* alloc_iep_ops()
+{
+    struct iep_ops *ops = (struct iep_ops*)malloc(sizeof(struct iep_ops));
+
+    if (ops == NULL) {
+        IEP_ERR("allocate structure iep_ops failure\n");
+        return NULL;
+    }
+
+    ops->claim = iep_ops_claim;
+    ops->init = iep_ops_init;
+    ops->config_src_dst = iep_ops_config_src_dst;
+    ops->config_yuv_enh = iep_ops_config_yuv_enh;
+    ops->config_yuv_enh_param = iep_ops_config_yuv_enh_param;
+    ops->config_color_enh = iep_ops_config_color_enh;
+    ops->config_color_enh_param = iep_ops_config_color_enh_param;
+    ops->config_scale = iep_ops_config_scale;
+    ops->config_scale_param = iep_ops_config_scale_param;
+    ops->config_yuv_denoise = iep_ops_config_yuv_denoise;
+    ops->config_yuv_deinterlace = iep_ops_config_yuv_deinterlace;
+    ops->config_yuv_deinterlace_param1 = iep_ops_config_yuv_deinterlace_param1;
+    ops->config_yuv_dil_src_dst = iep_ops_config_yuv_dil_src_dst;
+    ops->config_yuv_deinterlace_param2 = iep_ops_config_yuv_deinterlace_param2;
+    ops->config_color_space_convertion = iep_ops_config_color_space_convertion;
+    ops->config_color_space_convertion_param = iep_ops_config_color_space_convertion_param;
+    ops->config_direct_lcdc_path = iep_ops_config_direct_lcdc_path;
+    ops->run_sync = iep_ops_run_sync;
+    ops->run_async = iep_ops_run_async;
+    ops->poll = iep_ops_poll;
+    ops->reclaim = iep_ops_reclaim;
+
+    return ops;
+}
+
+void free_iep_ops(struct iep_ops *ops)
+{
+    if (ops != NULL) {
+        free(ops);
     }
 }
 
