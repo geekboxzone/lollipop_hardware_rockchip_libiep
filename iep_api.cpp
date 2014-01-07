@@ -203,7 +203,7 @@ int iep_api::config_yuv_enh(iep_param_YUV_color_enhance_t *yuv_enh)
         msg->contrast_int       = (int)(yuv_enh->yuv_enh_contrast * 128);
         msg->cos_hue_int        = (int)(cos(yuv_enh->yuv_enh_hue_angle) * 128.0);
         msg->sin_hue_int        = (int)(sin(yuv_enh->yuv_enh_hue_angle) * 128.0);
-        msg->yuv_enh_brightness = yuv_enh->yuv_enh_brightness;
+        msg->yuv_enh_brightness = yuv_enh->yuv_enh_brightness >= 0 ? yuv_enh->yuv_enh_brightness : (yuv_enh->yuv_enh_brightness + 64);
 
         msg->video_mode  = yuv_enh->video_mode;
         msg->color_bar_y = yuv_enh->color_bar_y;
@@ -729,7 +729,7 @@ int iep_api::yuv_enh_sanity_check(iep_param_YUV_color_enhance_t *yuv_enh) {
             break;
         }
 
-        if (yuv_enh->yuv_enh_brightness < -31 || yuv_enh->yuv_enh_brightness > 31) {
+        if (yuv_enh->yuv_enh_brightness < -32 || yuv_enh->yuv_enh_brightness > 31) {
             IEP_ERR("Invalidate parameter, yuv_enh_brightness!\n");
             break;
         }
