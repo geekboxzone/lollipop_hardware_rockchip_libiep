@@ -14,7 +14,7 @@ typedef struct iep_param_YUV_color_enhance {
     float               yuv_enh_saturation; // [0, 1.992]
     float               yuv_enh_contrast;   // [0, 1.992]
     signed char         yuv_enh_brightness; // [-32, 31]
-    signed char         yuv_enh_hue_angle;  // [-30, 30]
+    float               yuv_enh_hue_angle;  // [-30, 30]
     IEP_VIDEO_MODE_t    video_mode;
     unsigned char       color_bar_y;        // [0, 127]
     unsigned char       color_bar_u;        // [0, 127]
