@@ -453,7 +453,6 @@ int iep_api::config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil, iep_im
         }
 
         msg->dein_high_fre_en    = yuv_dil->high_freq_en;
-        ALOGE("%s %d, %d\n", __func__, __LINE__, yuv_dil->dil_mode);
         msg->dein_mode           = yuv_dil->dil_mode;
         msg->field_order         = yuv_dil->field_order;
         msg->dein_ei_mode        = yuv_dil->dil_ei_mode;
