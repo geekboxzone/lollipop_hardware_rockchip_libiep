@@ -109,6 +109,7 @@ public:
     virtual int config_scale();
     virtual int config_scale(iep_param_scale *scale);
     virtual int config_yuv_denoise();
+    virtual int config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp);
     virtual int config_yuv_deinterlace();
     virtual int config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil);
     virtual int config_yuv_dil_src_dst(iep_img *src1, iep_img *dst1);
@@ -126,6 +127,7 @@ private:
     int yuv_enh_sanity_check(iep_param_YUV_color_enhance_t *yuv_enh);
     int rgb_enh_sanity_check(iep_param_RGB_color_enhance_t *rgb_enh);
     int direct_lcdc_path_sanity_check(iep_param_direct_path_interface_t *dpi);
+    int yuv_denoise_sanity_check(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp);
     int dil_src_dst_sanity_check(iep_img *src1, iep_img *dst1);
     int deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1);
     int color_space_convertion_sanity_check(iep_param_color_space_convertion_t *clr_convert);
@@ -383,6 +385,26 @@ int iep_api::config_yuv_denoise()
     while (0);*/
     IEP_ERR("NOT available in this version\n");
 
+    return -1;
+}
+
+int iep_api::config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp)
+{
+    do {
+        if (0 > yuv_denoise_sanity_check(src_itemp, src_ftemp, dst_itemp, dst_ftemp)) {
+            break;
+        }
+        
+        memcpy(&msg->src_itemp, src_itemp, sizeof(iep_img));
+        memcpy(&msg->src_ftemp, src_ftemp, sizeof(iep_img));
+        memcpy(&msg->dst_itemp, dst_itemp, sizeof(iep_img));
+        memcpy(&msg->dst_ftemp, dst_ftemp, sizeof(iep_img));
+        
+        msg->yuv_3D_denoise_en = 1;
+        
+        return 0;
+    } while (0);
+    
     return -1;
 }
 
@@ -838,6 +860,20 @@ int iep_api::color_space_convertion_sanity_check(iep_param_color_space_convertio
     }
     while (0);
 
+    return -1;
+}
+
+int iep_api::yuv_denoise_sanity_check(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp)
+{
+    do {
+        if (src_itemp == NULL || src_ftemp == NULL || dst_itemp == NULL || dst_ftemp == NULL) {
+            IEP_ERR("Invalidate parameter!\n");
+            break;
+        }
+                
+        return 0;
+    } while (0);
+    
     return -1;
 }
 

@@ -134,6 +134,7 @@ public:
     virtual int config_scale() = 0;
     virtual int config_scale(iep_param_scale_t *scale) = 0;
     virtual int config_yuv_denoise() = 0;
+    virtual int config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp) = 0;
     virtual int config_yuv_deinterlace() = 0;
     virtual int config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil) = 0;
     virtual int config_yuv_dil_src_dst(iep_img *src1, iep_img *dst1) = 0;
