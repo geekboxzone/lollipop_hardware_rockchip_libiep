@@ -42,7 +42,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libiep \
 	libvpu
 
-LOCAL_LDLIBS += -lpthread
+#LOCAL_LDLIBS += -lpthread
 
 LOCAL_MODULE := iep_async_test
 LOCAL_MODULE_TAGS := optional
@@ -65,7 +65,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libiep \
 	libvpu
 
-LOCAL_LDLIBS += -lpthread
+#LOCAL_LDLIBS += -lpthread
 
 LOCAL_MODULE := iep_sync_test
 LOCAL_MODULE_TAGS := optional tests
@@ -88,7 +88,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libiep \
 	libvpu
 
-LOCAL_LDLIBS += -lpthread
+#LOCAL_LDLIBS += -lpthread
 
 LOCAL_MODULE := iep_func_test
 LOCAL_MODULE_TAGS := optional tests
