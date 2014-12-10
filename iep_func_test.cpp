@@ -19,7 +19,7 @@
 
 #include "iep_api.h"
 #include "iep.h"
-#include "../libon2/vpu_mem.h"
+#include "../librkvpu/vpu_mem.h"
 
 typedef enum {
     TEST_CASE_NONE,
