@@ -63,7 +63,7 @@ static int64_t GetTime() {
 }
 
 static int read_line(FILE *file, char *str) {
-    char ch;
+    int ch;
     int i = 0;
 
     while (1) {
@@ -97,19 +97,19 @@ static int parse_cfg_file(FILE *file, void *param) {
             memset(str, 0, sizeof(str));
             ret = read_line(file, str);
             if (strncmp(str, "high_freq_en", strlen("high_freq_en")) == 0) {
-                sscanf(str, "high_freq_en %d", &arg->high_freq_en);
+                sscanf(str, "high_freq_en %d", (int*)&arg->high_freq_en);
             } else if (strncmp(str, "dil_mode", strlen("dil_mode")) == 0) {
-                sscanf(str, "dil_mode %d", &arg->dil_mode);
+                sscanf(str, "dil_mode %d", (int*)&arg->dil_mode);
             } else if (strncmp(str, "dil_high_freq_fct", strlen("dil_high_freq_fct")) == 0) {
-                sscanf(str, "dil_high_freq_fct %d", &arg->dil_high_freq_fct);
+                sscanf(str, "dil_high_freq_fct %d", (int*)&arg->dil_high_freq_fct);
             } else if (strncmp(str, "dil_ei_mode", strlen("dil_ei_mode")) == 0) {
-                sscanf(str, "dil_ei_mode %d", &arg->dil_ei_mode);
+                sscanf(str, "dil_ei_mode %d", (int*)&arg->dil_ei_mode);
             } else if (strncmp(str, "dil_ei_smooth", strlen("dil_ei_smooth")) == 0) {
-                sscanf(str, "dil_ei_smooth %d", &arg->dil_ei_smooth);
+                sscanf(str, "dil_ei_smooth %d", (int*)&arg->dil_ei_smooth);
             } else if (strncmp(str, "dil_ei_sel", strlen("dil_ei_sel")) == 0) {
-                sscanf(str, "dil_ei_sel %d", &arg->dil_ei_sel);
+                sscanf(str, "dil_ei_sel %d", (int*)&arg->dil_ei_sel);
             } else if (strncmp(str, "dil_ei_radius", strlen("dil_ei_radius")) == 0) {
-                sscanf(str, "dil_ei_radius %d", &arg->dil_ei_radius);
+                sscanf(str, "dil_ei_radius %d", (int*)&arg->dil_ei_radius);
             }
         }
         while (ret == 0);
@@ -128,22 +128,22 @@ static int parse_cfg_file(FILE *file, void *param) {
                 sscanf(str, "yuv_enh_contrast %f", &arg->yuv_enh_contrast);
                 ALOGD("value %f\n", arg->yuv_enh_contrast);
             } else if (strncmp(str, "yuv_enh_brightness", strlen("yuv_enh_brightness")) == 0) {
-                sscanf(str, "yuv_enh_brightness %d", &arg->yuv_enh_brightness);
+                sscanf(str, "yuv_enh_brightness %d", (int*)&arg->yuv_enh_brightness);
                 ALOGD("value %d\n", arg->yuv_enh_brightness);
             } else if (strncmp(str, "yuv_enh_hue_angle", strlen("yuv_enh_hue_angle")) == 0) {
-                sscanf(str, "yuv_enh_hue_angle %d", &arg->yuv_enh_hue_angle);
+                sscanf(str, "yuv_enh_hue_angle %d", (int*)&arg->yuv_enh_hue_angle);
                 ALOGD("value %d\n", arg->yuv_enh_hue_angle);
             } else if (strncmp(str, "video_mode", strlen("video_mode")) == 0) {
-                sscanf(str, "video_mode %d", &arg->video_mode);
+                sscanf(str, "video_mode %d", (int*)&arg->video_mode);
                 ALOGD("value %d\n", arg->video_mode);
             } else if (strncmp(str, "color_bar_y", strlen("color_bar_y")) == 0) {
-                sscanf(str, "color_bar_y %d", &arg->color_bar_y);
+                sscanf(str, "color_bar_y %d", (int*)&arg->color_bar_y);
                 ALOGD("value %d\n", arg->color_bar_y);
             } else if (strncmp(str, "color_bar_u", strlen("color_bar_u")) == 0) {
-                sscanf(str, "color_bar_u %d", &arg->color_bar_u);
+                sscanf(str, "color_bar_u %d", (int*)&arg->color_bar_u);
                 ALOGD("value %d\n", arg->color_bar_u);
             } else if (strncmp(str, "color_bar_v", strlen("color_bar_v")) == 0) {
-                sscanf(str, "color_bar_v %d", &arg->color_bar_v);
+                sscanf(str, "color_bar_v %d", (int*)&arg->color_bar_v);
                 ALOGD("value %d\n", arg->color_bar_v);
             }
         }
@@ -160,34 +160,34 @@ static int parse_cfg_file(FILE *file, void *param) {
                 sscanf(str, "rgb_enh_coe %f", &arg->rgb_enh_coe);
                 ALOGD("value %f\n", arg->rgb_enh_coe);
             } else if (strncmp(str, "rgb_enhance_mode", strlen("rgb_enhance_mode")) == 0) {
-                sscanf(str, "rgb_enhance_mode %d", &arg->rgb_enhance_mode);
+                sscanf(str, "rgb_enhance_mode %d", (int*)&arg->rgb_enhance_mode);
                 ALOGD("value %d\n", arg->rgb_enhance_mode);
             } else if (strncmp(str, "rgb_cg_en", strlen("rgb_cg_en")) == 0) {
-                sscanf(str, "rgb_cg_en %d", &arg->rgb_cg_en);
+                sscanf(str, "rgb_cg_en %d", (int*)&arg->rgb_cg_en);
                 ALOGD("value %d\n", arg->rgb_cg_en);
             } else if (strncmp(str, "cg_rr", strlen("cg_rr")) == 0) {
-                sscanf(str, "cg_rr %f", &arg->cg_rr);
+                sscanf(str, "cg_rr %lf", &arg->cg_rr);
                 ALOGD("value %f\n", arg->cg_rr);
             } else if (strncmp(str, "cg_rg", strlen("cg_rg")) == 0) {
-                sscanf(str, "cg_rg %f", &arg->cg_rg);
+                sscanf(str, "cg_rg %lf", &arg->cg_rg);
                 ALOGD("value %f\n", arg->cg_rg);
             } else if (strncmp(str, "cg_rb", strlen("cg_rb")) == 0) {
-                sscanf(str, "cg_rb %f", &arg->cg_rb);
+                sscanf(str, "cg_rb %lf", &arg->cg_rb);
                 ALOGD("value %f\n", arg->cg_rb);
             } else if (strncmp(str, "rgb_contrast_enhance_mode", strlen("rgb_contrast_enhance_mode")) == 0) {
-                sscanf(str, "rgb_contrast_enhance_mode %d", &arg->rgb_contrast_enhance_mode);
-                ALOGD("value %d\n", arg->rgb_contrast_enhance_mode);
+                sscanf(str, "rgb_contrast_enhance_mode %d", (int*)&arg->rgb_contrast_enhance_mode);
+                ALOGD("value %d\n", (int*)arg->rgb_contrast_enhance_mode);
             } else if (strncmp(str, "enh_threshold", strlen("enh_threshold")) == 0) {
-                sscanf(str, "enh_threshold %d", &arg->enh_threshold);
+                sscanf(str, "enh_threshold %d", (int*)&arg->enh_threshold);
                 ALOGD("value %d\n", arg->enh_threshold);
             } else if (strncmp(str, "enh_alpha_num", strlen("enh_alpha_num")) == 0) {
-                sscanf(str, "enh_alpha_num %d", &arg->enh_alpha_num);
+                sscanf(str, "enh_alpha_num %d", (int*)&arg->enh_alpha_num);
                 ALOGD("value %d\n", arg->enh_alpha_num);
             } else if (strncmp(str, "enh_alpha_base", strlen("enh_alpha_base")) == 0) {
-                sscanf(str, "enh_alpha_base %d", &arg->enh_alpha_base);
+                sscanf(str, "enh_alpha_base %d", (int*)&arg->enh_alpha_base);
                 ALOGD("value %d\n", arg->enh_alpha_base);
             } else if (strncmp(str, "enh_radius", strlen("enh_radius")) == 0) {
-                sscanf(str, "enh_radius %d", &arg->enh_radius);
+                sscanf(str, "enh_radius %d", (int*)&arg->enh_radius);
                 ALOGD("value %d\n", arg->enh_radius);
             }
         }
@@ -200,7 +200,7 @@ static int parse_cfg_file(FILE *file, void *param) {
             memset(str, 0, sizeof(str));
             ret = read_line(file, str);
             if (strncmp(str, "scale_up_mode", strlen("scale_up_mode")) == 0) {
-                sscanf(str, "scale_up_mode %d", &arg->scale_up_mode);
+                sscanf(str, "scale_up_mode %d", (int*)&arg->scale_up_mode);
             }
         }
         while (ret == 0);
@@ -212,19 +212,19 @@ static int parse_cfg_file(FILE *file, void *param) {
             memset(str, 0, sizeof(str));
             ret = read_line(file, str);
             if (strncmp(str, "rgb2yuv_mode", strlen("rgb2yuv_mode")) == 0) {
-                sscanf(str, "rgb2yuv_mode %d", &arg->rgb2yuv_mode);
+                sscanf(str, "rgb2yuv_mode %d", (int*)&arg->rgb2yuv_mode);
             } else if (strncmp(str, "yuv2rgb_mode", strlen("yuv2rgb_mode")) == 0) {
-                sscanf(str, "yuv2rgb_mode %d", &arg->yuv2rgb_mode);
+                sscanf(str, "yuv2rgb_mode %d", (int*)&arg->yuv2rgb_mode);
             } else if (strncmp(str, "rgb2yuv_input_clip", strlen("rgb2yuv_input_clip")) == 0) {
-                sscanf(str, "rgb2yuv_input_clip %d", &arg->rgb2yuv_input_clip);
+                sscanf(str, "rgb2yuv_input_clip %d", (int*)&arg->rgb2yuv_input_clip);
             } else if (strncmp(str, "yuv2rgb_input_clip", strlen("yuv2rgb_input_clip")) == 0) {
-                sscanf(str, "yuv2rgb_input_clip %d", &arg->yuv2rgb_input_clip);
+                sscanf(str, "yuv2rgb_input_clip %d", (int*)&arg->yuv2rgb_input_clip);
             } else if (strncmp(str, "global_alpha_value", strlen("global_alpha_value")) == 0) {
-                sscanf(str, "global_alpha_value %d", &arg->global_alpha_value);
+                sscanf(str, "global_alpha_value %d", (int*)&arg->global_alpha_value);
             } else if (strncmp(str, "dither_up_en", strlen("dither_up_en")) == 0) {
-                sscanf(str, "dither_up_en %d", &arg->dither_up_en);
+                sscanf(str, "dither_up_en %d", (int*)&arg->dither_up_en);
             } else if (strncmp(str, "dither_down_en", strlen("dither_down_en")) == 0) {
-                sscanf(str, "dither_down_en %d", &arg->dither_down_en);
+                sscanf(str, "dither_down_en %d", (int*)&arg->dither_down_en);
             }
         }
         while (ret == 0);
@@ -236,7 +236,7 @@ static int parse_cfg_file(FILE *file, void *param) {
             memset(str, 0, sizeof(str));
             ret = read_line(file, str);
             if (strncmp(str, "enable", strlen("enable")) == 0) {
-                sscanf(str, "enable %d", &arg->enable);
+                sscanf(str, "enable %d", (int*)&arg->enable);
             } else if (strncmp(str, "off_x", strlen("off_x")) == 0) {
                 sscanf(str, "off_x %d", &arg->off_x);
             } else if (strncmp(str, "off_y", strlen("off_y")) == 0) {
@@ -246,7 +246,7 @@ static int parse_cfg_file(FILE *file, void *param) {
             } else if (strncmp(str, "height", strlen("height")) == 0) {
                 sscanf(str, "height %d", &arg->height);
             } else if (strncmp(str, "layer", strlen("layer")) == 0) {
-                sscanf(str, "layer %d", &arg->layer);
+                sscanf(str, "layer %d", (int*)&arg->layer);
             }
         }
         while (ret == 0);
@@ -261,7 +261,7 @@ static void* iep_process_thread(void *param)
 
     mem_region_t *mr = (mem_region_t*)param;
 
-    int phy_src, phy_reg, phy_dst;
+    uint32_t phy_src, phy_reg, phy_dst;
     int len_src, len_reg, len_dst;
     uint8_t *vir_reg, *vir_src, *vir_dst;
     iep_img src;
@@ -300,14 +300,14 @@ static void* iep_process_thread(void *param)
     case IEP_FORMAT_YCrCb_422_P:
     case IEP_FORMAT_YCrCb_422_SP:
         datalen = mr->src_w * mr->src_h * 2;
-        src.v_addr = (uint32_t*)(phy_src + mr->src_w * mr->src_h + mr->src_w * mr->src_h / 2);
+        src.v_addr = phy_src + mr->src_w * mr->src_h + mr->src_w * mr->src_h / 2;
         break;
     case IEP_FORMAT_YCbCr_420_P:
     case IEP_FORMAT_YCbCr_420_SP:
     case IEP_FORMAT_YCrCb_420_P:
     case IEP_FORMAT_YCrCb_420_SP:
         datalen = mr->src_w * mr->src_h * 3 / 2;
-        src.v_addr = (uint32_t*)(phy_src + mr->src_w * mr->src_h + mr->src_w * mr->src_h / 4);
+        src.v_addr = phy_src + mr->src_w * mr->src_h + mr->src_w * mr->src_h / 4;
         break;
     default:
         ;
@@ -326,8 +326,8 @@ static void* iep_process_thread(void *param)
     src.vir_w = mr->src_w;
     src.vir_h = mr->src_h;
     src.format = mr->src_fmt;
-    src.mem_addr = (uint32_t*)phy_src;
-    src.uv_addr  = (uint32_t*)(phy_src + mr->src_w * mr->src_h);
+    src.mem_addr = phy_src;
+    src.uv_addr  = phy_src + mr->src_w * mr->src_h;
 
     switch (mr->dst_fmt) {
     case IEP_FORMAT_ABGR_8888:
@@ -343,21 +343,19 @@ static void* iep_process_thread(void *param)
     case IEP_FORMAT_YCrCb_422_P:
     case IEP_FORMAT_YCrCb_422_SP:
         datalen = mr->dst_w * mr->dst_h * 2;
-        dst.v_addr = (uint32_t*)(phy_dst + mr->dst_w * mr->dst_h + mr->dst_w * mr->dst_h / 2);
+        dst.v_addr = phy_dst + mr->dst_w * mr->dst_h + mr->dst_w * mr->dst_h / 2;
         break;
     case IEP_FORMAT_YCbCr_420_P:
     case IEP_FORMAT_YCbCr_420_SP:
     case IEP_FORMAT_YCrCb_420_P:
     case IEP_FORMAT_YCrCb_420_SP:
         datalen = mr->dst_w * mr->dst_h * 3 / 2;
-        dst.v_addr = (uint32_t*)(phy_dst + mr->dst_w * mr->dst_h + mr->dst_w * mr->dst_h / 4);
+        dst.v_addr = phy_dst + mr->dst_w * mr->dst_h + mr->dst_w * mr->dst_h / 4;
         break;
     default:
         ;
     }
 
-    ALOGD("%s %d\n", __func__, __LINE__);
-    
     dst.act_w = mr->dst_w;
     dst.act_h = mr->dst_h;
     dst.x_off = 0;
@@ -365,14 +363,10 @@ static void* iep_process_thread(void *param)
     dst.vir_w = mr->dst_w;
     dst.vir_h = mr->dst_h;
     dst.format = mr->dst_fmt;
-    dst.mem_addr = (uint32_t*)phy_dst;
-    dst.uv_addr = (uint32_t*)(phy_dst + mr->dst_w * mr->dst_h);
-
-    ALOGD("%s %d\n", __func__, __LINE__);
+    dst.mem_addr = phy_dst;
+    dst.uv_addr = phy_dst + mr->dst_w * mr->dst_h;
 
     api->init(&src, &dst);
-
-    ALOGD("%s %d\n", __func__, __LINE__);
 
     switch (mr->testcase) {
     case TEST_CASE_DENOISE:
@@ -429,8 +423,8 @@ static void* iep_process_thread(void *param)
             src1.vir_w = mr->src_w;
             src1.vir_h = mr->src_h;
             src1.format = mr->src_fmt;
-            src1.mem_addr = (uint32_t*)(phy_src + datalen);
-            src1.uv_addr  = (uint32_t*)(phy_src + datalen + mr->src_w * mr->src_h);
+            src1.mem_addr = phy_src + datalen;
+            src1.uv_addr  = phy_src + datalen + mr->src_w * mr->src_h;
 
             dst1.act_w = mr->dst_w;
             dst1.act_h = mr->dst_h;
@@ -439,8 +433,8 @@ static void* iep_process_thread(void *param)
             dst1.vir_w = mr->dst_w;
             dst1.vir_h = mr->dst_h;
             dst1.format = mr->dst_fmt;
-            dst1.mem_addr = (uint32_t*)(phy_dst + datalen);
-            dst1.uv_addr = (uint32_t*)(phy_dst + datalen + mr->dst_w * mr->dst_h);
+            dst1.mem_addr = phy_dst + datalen;
+            dst1.uv_addr = phy_dst + datalen + mr->dst_w * mr->dst_h;
 
             FILE *cfgfile = fopen(mr->cfg_url, "r");
 
@@ -478,8 +472,6 @@ static void* iep_process_thread(void *param)
         ALOGE("Failure to Configure DIRECT LCDC PATH\n");
     }
 #endif
-
-    ALOGD("%s %d\n", __func__, __LINE__);
 
     if (0 == api->run_sync()) {
         ALOGD("%d success\n", getpid());

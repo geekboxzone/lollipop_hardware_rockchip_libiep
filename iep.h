@@ -5,18 +5,17 @@
 
 #define IEP_IOC_MAGIC 'i'
 
-#define IEP_SET_PARAMETER_REQ				_IOW(IEP_IOC_MAGIC, 1, unsigned long)
-#define IEP_SET_PARAMETER_DEINTERLACE		_IOW(IEP_IOC_MAGIC, 2, unsigned long)
-#define IEP_SET_PARAMETER_ENHANCE			_IOW(IEP_IOC_MAGIC, 3, unsigned long)
-#define IEP_SET_PARAMETER_CONVERT			_IOW(IEP_IOC_MAGIC, 4, unsigned long)
-#define IEP_SET_PARAMETER_SCALE				_IOW(IEP_IOC_MAGIC, 5, unsigned long)
-#define IEP_GET_RESULT_SYNC					_IOW(IEP_IOC_MAGIC, 6, unsigned long)
-#define IEP_GET_RESULT_ASYNC				_IOW(IEP_IOC_MAGIC, 7, unsigned long)
-#define IEP_SET_PARAMETER					_IOW(IEP_IOC_MAGIC, 8, unsigned long)
-#define IEP_RELEASE_CURRENT_TASK            _IOW(IEP_IOC_MAGIC, 9, unsigned long)
+#define IEP_SET_PARAMETER_REQ _IOW(IEP_IOC_MAGIC, 1, unsigned long)
+#define IEP_SET_PARAMETER_DEINTERLACE _IOW(IEP_IOC_MAGIC, 2, unsigned long)
+#define IEP_SET_PARAMETER_ENHANCE _IOW(IEP_IOC_MAGIC, 3, unsigned long)
+#define IEP_SET_PARAMETER_CONVERT _IOW(IEP_IOC_MAGIC, 4, unsigned long)
+#define IEP_SET_PARAMETER_SCALE _IOW(IEP_IOC_MAGIC, 5, unsigned long)
+#define IEP_GET_RESULT_SYNC _IOW(IEP_IOC_MAGIC, 6, unsigned long)
+#define IEP_GET_RESULT_ASYNC _IOW(IEP_IOC_MAGIC, 7, unsigned long)
+#define IEP_SET_PARAMETER _IOW(IEP_IOC_MAGIC, 8, unsigned long)
+#define IEP_RELEASE_CURRENT_TASK _IOW(IEP_IOC_MAGIC, 9, unsigned long)
 
-enum
-{
+enum {
     yuv2rgb_BT_601_l            = 0x0,     /* BT.601_1 */
     yuv2rgb_BT_601_f            = 0x1,     /* BT.601_f */
     yuv2rgb_BT_709_l            = 0x2,     /* BT.709_1 */
@@ -31,8 +30,7 @@ enum
     rgb2yuv_BT_709_f            = 0x3,     /* BT.709_f */
 };
 
-enum
-{
+enum {
     dein_mode_bypass_dis         = 0x0,
     dein_mode_I4O2               = 0x1,
     dein_mode_I4O1B              = 0x2,
@@ -42,8 +40,7 @@ enum
     dein_mode_bypass             = 0x6,    
 };
 
-enum
-{
+enum {
     rgb_enhance_bypass          = 0x0, 
     rgb_enhance_denoise         = 0x1,
     rgb_enhance_detail          = 0x2,
@@ -56,12 +53,11 @@ enum
     rgb_contrast_DDE_P_CC          = 0x1, //dde prior to cg
 }; //for rgb_contrast_enhance_mode
 
-enum
-{
-	black_screen                   = 0x0,
-	blue_screen                    = 0x1,
-	color_bar                      = 0x2,
-	normal_mode                    = 0x3,
+enum {
+    black_screen                   = 0x0,
+    blue_screen                    = 0x1,
+    color_bar                      = 0x2,
+    normal_mode                    = 0x3,
 }; //for video mode
 
 /*
@@ -73,8 +69,7 @@ enum
 {  2, 16, {{ 0, 0,  16,11,  11, 5,   5, 0 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565        
 {  2, 16, {{ 0, 0,   5, 0,  11, 5,  16,11 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565        
 */
-enum
-{
+enum {
     IEP_FORMAT_ARGB_8888    = 0x0,    
     IEP_FORMAT_ABGR_8888    = 0x1,    
     IEP_FORMAT_RGBA_8888    = 0x2,    
@@ -90,33 +85,29 @@ enum
     IEP_FORMAT_YCrCb_422_P  = 0x15,//same as IEP_FORMAT_YCbCr_422_P
     IEP_FORMAT_YCrCb_420_SP = 0x16,
     IEP_FORMAT_YCrCb_420_P  = 0x17,//same as IEP_FORMAT_YCbCr_420_P
-       
 }; //for format
 
-typedef struct iep_img
-{
-    unsigned short act_w;         // act_width
-    unsigned short act_h;         // act_height
-    signed short   x_off;         // x offset for the vir,word unit
-    signed short   y_off;         // y offset for the vir,word unit
+typedef struct iep_img {
+    uint16_t act_w;         // act_width
+    uint16_t act_h;         // act_height
+    int16_t x_off;         // x offset for the vir,word unit
+    int16_t y_off;         // y offset for the vir,word unit
 
-    unsigned short vir_w;         //unit :pix 
-    unsigned short vir_h;         //unit :pix
-    unsigned int   format;
-    unsigned int  *mem_addr;
-    unsigned int  *uv_addr;
-    unsigned int  *v_addr;
+    uint16_t vir_w;         //unit :pix 
+    uint16_t vir_h;         //unit :pix
+    uint32_t format;
+    uint32_t mem_addr;
+    uint32_t uv_addr;
+    uint32_t v_addr;
     
-    unsigned char   rb_swap;//not be used
-    unsigned char   uv_swap;//not be used
+    uint8_t rb_swap;//not be used
+    uint8_t uv_swap;//not be used
 	
-    unsigned char   alpha_swap;//not be used
-}
-iep_img;
+    uint8_t alpha_swap;//not be used
+} iep_img;
 
 
-typedef struct IEP_MSG
-{
+typedef struct IEP_MSG {
     iep_img src;    // src active window 
     iep_img dst;    // src virtual window
 
@@ -129,72 +120,71 @@ typedef struct IEP_MSG
     iep_img dst_itemp;
     iep_img dst_ftemp;
 
-    unsigned char dither_up_en;
-    unsigned char dither_down_en;//not to be used
+    uint8_t dither_up_en;
+    uint8_t dither_down_en;//not to be used
 
-    unsigned char yuv2rgb_mode;
-    unsigned char rgb2yuv_mode;
+    uint8_t yuv2rgb_mode;
+    uint8_t rgb2yuv_mode;
 
-    unsigned char global_alpha_value;
+    uint8_t global_alpha_value;
 
-    unsigned char rgb2yuv_clip_en;
-    unsigned char yuv2rgb_clip_en;
+    uint8_t rgb2yuv_clip_en;
+    uint8_t yuv2rgb_clip_en;
 
-    unsigned char lcdc_path_en;
-    int off_x;
-    int off_y;
-    int width;
-    int height;
-    int layer;
+    uint8_t lcdc_path_en;
+    int32_t off_x;
+    int32_t off_y;
+    int32_t width;
+    int32_t height;
+    int32_t layer;
 
-    unsigned char yuv_3D_denoise_en;
-    
+    uint8_t yuv_3D_denoise_en;
+
     /// yuv color enhance
-    unsigned char yuv_enhance_en;
-    int sat_con_int;
-    int contrast_int;
-    int cos_hue_int;
-    int sin_hue_int;
-    signed char   yuv_enh_brightness;//-32<brightness<31
-    unsigned char  video_mode;//0-3  
-    unsigned char  color_bar_y;//0-127
-    unsigned char  color_bar_u;//0-127   
-    unsigned char  color_bar_v;//0-127   
+    uint8_t yuv_enhance_en;
+    int32_t sat_con_int;
+    int32_t contrast_int;
+    int32_t cos_hue_int;
+    int32_t sin_hue_int;
+    int8_t yuv_enh_brightness;//-32<brightness<31
+    uint8_t video_mode;//0-3  
+    uint8_t color_bar_y;//0-127
+    uint8_t color_bar_u;//0-127   
+    uint8_t color_bar_v;//0-127   
 
     
-    unsigned char rgb_enhance_en;//i don't konw what is used
+    uint8_t rgb_enhance_en;//i don't konw what is used
     
-    unsigned char rgb_color_enhance_en;//sw_rgb_color_enh_en
-    unsigned int rgb_enh_coe;
+    uint8_t rgb_color_enhance_en;//sw_rgb_color_enh_en
+    uint32_t rgb_enh_coe;
     
-    unsigned char rgb_enhance_mode;//sw_rgb_enh_sel,dde sel
+    uint8_t rgb_enhance_mode;//sw_rgb_enh_sel,dde sel
     
-    unsigned char rgb_cg_en;//sw_rgb_con_gam_en
-    unsigned int cg_tab[192];
+    uint8_t rgb_cg_en;//sw_rgb_con_gam_en
+    uint32_t cg_tab[192];
     
-    unsigned char rgb_contrast_enhance_mode;//sw_con_gam_order;0 cg prior to dde,1 dde prior to cg
+    uint8_t rgb_contrast_enhance_mode;//sw_con_gam_order;0 cg prior to dde,1 dde prior to cg
 
-    int enh_threshold; 
-    int enh_alpha;
-    int enh_radius;
+    int32_t enh_threshold; 
+    int32_t enh_alpha;
+    int32_t enh_radius;
     
-    unsigned char scale_up_mode;
+    uint8_t scale_up_mode;
 
-    unsigned char field_order;
-    unsigned char dein_mode;
+    uint8_t field_order;
+    uint8_t dein_mode;
     //DIL HF
-    unsigned char dein_high_fre_en;
-    unsigned char dein_high_fre_fct;
+    uint8_t dein_high_fre_en;
+    uint8_t dein_high_fre_fct;
     //DIL EI
-    unsigned char dein_ei_mode;
-    unsigned char dein_ei_smooth;
-    unsigned char dein_ei_sel;
-    unsigned char dein_ei_radius;//when dein_ei_sel=0 will be used
+    uint8_t dein_ei_mode;
+    uint8_t dein_ei_smooth;
+    uint8_t dein_ei_sel;
+    uint8_t dein_ei_radius;//when dein_ei_sel=0 will be used
 
-    bool vir_addr_enable;
-    
+    uint8_t vir_addr_enable;
+
     void *base;
-}
-IEP_MSG;
+} IEP_MSG;
 
 #endif

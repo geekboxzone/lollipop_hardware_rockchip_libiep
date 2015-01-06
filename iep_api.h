@@ -36,7 +36,7 @@ typedef enum IEP_RGB_COLOR_ENHANCE_ORDER {
 typedef struct iep_param_RGB_color_enhance {
     float                           rgb_enh_coe;        // [0, 3.96875]
     IEP_RGB_COLOR_ENHANCE_MODE_t    rgb_enhance_mode;
-    unsigned char                   rgb_cg_en;          //sw_rgb_con_gam_en
+    uint8_t                         rgb_cg_en;          //sw_rgb_con_gam_en
     double                          cg_rr;
     double                          cg_rg;
     double                          cg_rb;
@@ -83,14 +83,14 @@ typedef enum IEP_YUV_DEINTERLACE_MODE {
 } IEP_YUV_DEINTERLACE_MODE_t;
 
 typedef struct iep_param_yuv_deinterlace {
-    unsigned char                   high_freq_en;
-    IEP_YUV_DEINTERLACE_MODE_t      dil_mode;
-    IEP_FIELD_ORDER_t               field_order;
-    unsigned char                   dil_high_freq_fct;  // [0, 127]
-    unsigned char                   dil_ei_mode;        // deinterlace edge interpolation 0: disable, 1: enable
-    unsigned char                   dil_ei_smooth;      // deinterlace edge interpolation for smooth effect 0: disable, 1: enable
-    unsigned char                   dil_ei_sel;         // deinterlace edge interpolation select
-    unsigned char                   dil_ei_radius;      // deinterlace edge interpolation radius [0, 3]
+    uint8_t                     high_freq_en;
+    IEP_YUV_DEINTERLACE_MODE_t  dil_mode;
+    IEP_FIELD_ORDER_t           field_order;
+    uint8_t                     dil_high_freq_fct;  // [0, 127]
+    uint8_t                     dil_ei_mode;        // deinterlace edge interpolation 0: disable, 1: enable
+    uint8_t                     dil_ei_smooth;      // deinterlace edge interpolation for smooth effect 0: disable, 1: enable
+    uint8_t                     dil_ei_sel;         // deinterlace edge interpolation select
+    uint8_t                     dil_ei_radius;      // deinterlace edge interpolation radius [0, 3]
 } iep_param_yuv_deinterlace_t;
 
 typedef enum IEP_COLOR_CONVERT_MODE {
@@ -111,12 +111,12 @@ typedef struct iep_param_color_space_convertion {
 } iep_param_color_space_convertion_t;
 
 typedef struct iep_param_direct_path_interface {
-    unsigned char                   enable;
+    uint8_t                         enable;
     int                             off_x;
     int                             off_y;
     int                             width;
     int                             height;
-    unsigned char                   layer;
+    uint8_t                         layer;
 } iep_param_direct_path_interface_t;
 
 typedef void (*iep_notify)(int result);

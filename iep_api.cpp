@@ -235,7 +235,7 @@ int iep_api::config_color_enh()
     /*for (i=0; i<sizeof(cg_tab)/sizeof(unsigned int); i++) {
         msg->cg_tab[i] = cg_tab[i];
     }*/
-    
+
     return 0;
 }
 
@@ -1075,16 +1075,16 @@ int iep_ops_init(void *iep_obj, iep_img *src, iep_img *dst)
 
 extern "C"
 int iep_ops_init_discrete(void *iep_obj, 
-                          int src_act_w, int src_act_h, 
-                          int src_x_off, int src_y_off,
-                          int src_vir_w, int src_vir_h, 
-                          int src_format, 
-                          int src_mem_addr, int src_uv_addr, int src_v_addr,
-                          int dst_act_w, int dst_act_h, 
-                          int dst_x_off, int dst_y_off,
-                          int dst_vir_w, int dst_vir_h, 
-                          int dst_format, 
-                          int dst_mem_addr, int dst_uv_addr, int dst_v_addr)
+                          int32_t src_act_w, int32_t src_act_h, 
+                          int32_t src_x_off, int32_t src_y_off,
+                          int32_t src_vir_w, int32_t src_vir_h, 
+                          int32_t src_format, 
+                          uint32_t src_mem_addr, uint32_t src_uv_addr, uint32_t src_v_addr,
+                          int32_t dst_act_w, int32_t dst_act_h, 
+                          int32_t dst_x_off, int32_t dst_y_off,
+                          int32_t dst_vir_w, int32_t dst_vir_h, 
+                          int32_t dst_format, 
+                          uint32_t dst_mem_addr, uint32_t dst_uv_addr, uint32_t dst_v_addr)
 {
     iep_img src;
     iep_img dst;
@@ -1096,9 +1096,9 @@ int iep_ops_init_discrete(void *iep_obj,
     src.vir_w    = src_vir_w;
     src.vir_h    = src_vir_h;
     src.format   = src_format;
-    src.mem_addr = (uint32_t*)src_mem_addr;
-    src.uv_addr  = (uint32_t*)src_uv_addr;
-    src.v_addr   = (uint32_t*)src_v_addr;
+    src.mem_addr = src_mem_addr;
+    src.uv_addr  = src_uv_addr;
+    src.v_addr   = src_v_addr;
 
     dst.act_w    = dst_act_w;
     dst.act_h    = dst_act_h;
@@ -1107,9 +1107,9 @@ int iep_ops_init_discrete(void *iep_obj,
     dst.vir_w    = dst_vir_w;
     dst.vir_h    = dst_vir_h;
     dst.format   = dst_format;
-    dst.mem_addr = (uint32_t*)dst_mem_addr;
-    dst.uv_addr  = (uint32_t*)dst_uv_addr;
-    dst.v_addr   = (uint32_t*)dst_v_addr;
+    dst.mem_addr = dst_mem_addr;
+    dst.uv_addr  = dst_uv_addr;
+    dst.v_addr   = dst_v_addr;
 
     return ((iep_interface*)iep_obj)->init(&src, &dst);
 }
