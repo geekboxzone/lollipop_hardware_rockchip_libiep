@@ -6,8 +6,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
+#include <cutils/properties.h>
 #include "cutils/log.h"
 #include "iep_api.h"
+#include "rga.h"
 
 #define PI  (3.1415926)
 
@@ -78,13 +80,11 @@ static unsigned int cg_tab[] =
 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
 
-//#define IEP_DEBUG
-
-#ifdef IEP_DEBUG
-#define IEP_DEB(fmt, args...) ALOGD(__FILE__ ",%s,:%d: " fmt, __func__, __LINE__, ## args)
-#else
-#define IEP_DEB(fmt, args...)
-#endif
+#define IEP_DEB(fmt, args...)   do { \
+                                    if (g_log_level > 0) { \
+                                        ALOGD(__FILE__ ",%s,:%d: " fmt, __func__, __LINE__, ## args); \
+                                    } \
+                                } while (0)
 
 #define IEP_ERR(fmt, args...) ALOGE(__FILE__ ",%s,:%d: " fmt, __func__, __LINE__, ## args)
 
@@ -95,6 +95,8 @@ private:
     pthread_t td_notify;
     iep_notify notify;
     int pid;
+    int rga_fd;
+    int iommu;
 
 public:
     iep_api();
@@ -109,14 +111,18 @@ public:
     virtual int config_scale();
     virtual int config_scale(iep_param_scale *scale);
     virtual int config_yuv_denoise();
-    virtual int config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp);
+    virtual int config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp,
+                                   iep_img *dst_itemp, iep_img *dst_ftemp);
     virtual int config_yuv_deinterlace();
     virtual int config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil);
     virtual int config_yuv_dil_src_dst(iep_img *src1, iep_img *dst1);
-    virtual int config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1);
+    virtual int config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil,
+                                       iep_img *src1, iep_img *dst1);
     virtual int config_color_space_convertion();
-    virtual int config_color_space_convertion(iep_param_color_space_convertion_t *clr_convert);
-    virtual int config_direct_lcdc_path(iep_param_direct_path_interface_t *dpi);
+    virtual int config_color_space_convertion(
+        iep_param_color_space_convertion_t *clr_convert);
+    virtual int config_direct_lcdc_path(
+        iep_param_direct_path_interface_t *dpi);
     virtual int run_sync();
     virtual int run_async(iep_notify notify);
     virtual int poll();
@@ -132,10 +138,32 @@ private:
     int deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1);
     int color_space_convertion_sanity_check(iep_param_color_space_convertion_t *clr_convert);
     int init_sanity_check(iep_img *src, iep_img *dst);
+    void recover_image(struct rga_req *req);
+    void recover_image1(struct rga_req *req);
 };
+
+static int g_mode = 0;
+static int g_log_level = 0;
+static pthread_once_t g_get_env_value_once = PTHREAD_ONCE_INIT;
+
+static void get_env_value()
+{
+    char prop_value[PROPERTY_VALUE_MAX];
+
+    if (property_get("iep.mode.control", prop_value, NULL))
+        g_mode = atoi(prop_value);
+
+    if (property_get("iep.log_level.control", prop_value, NULL))
+        g_log_level = atoi(prop_value);
+}
 
 iep_api::iep_api()
 {
+    //pthread_once(&g_get_env_value_once, get_env_value);
+    get_env_value();
+
+    ALOGE("g_mode %d, g_log_level %d\n", g_mode, g_log_level);
+
     msg = new IEP_MSG();
     if (msg == NULL) {
         IEP_ERR("memory allocated failed\n");
@@ -148,6 +176,20 @@ iep_api::iep_api()
     if (fd < 0) {
         IEP_ERR("file open failed\n");
         abort();
+    }
+
+    iommu = 0;
+    if (0 > ioctl(fd, IEP_GET_IOMMU_STATE, &iommu)) {
+        IEP_ERR("Get iommu state failed\n");
+        abort();
+    }
+
+    if (g_mode) {
+        rga_fd = open("/dev/rga", O_RDWR);
+        if (rga_fd < 0) {
+           IEP_ERR("rga device open failed\n");
+           abort();
+        }
     }
 
     pid = getpid();
@@ -166,6 +208,10 @@ iep_api::~iep_api()
         close(fd);
     }
 
+    if (rga_fd > 0) {
+        close(rga_fd);
+    }
+
     if (msg) {
         delete msg;
     }
@@ -178,8 +224,8 @@ int iep_api::config_yuv_enh()
     msg->sat_con_int        = 0x80;
     msg->contrast_int       = 0x80;
     // hue_angle = 0
-    msg->cos_hue_int        = 0x80;
-    msg->sin_hue_int        = 0x00;
+    msg->cos_hue_int        = 0x00;
+    msg->sin_hue_int        = 0x80;
 
     msg->yuv_enh_brightness = 0x00;
 
@@ -201,11 +247,18 @@ int iep_api::config_yuv_enh(iep_param_YUV_color_enhance_t *yuv_enh)
 
         msg->yuv_enhance_en = 1;
 
-        msg->sat_con_int        = (int)(yuv_enh->yuv_enh_saturation * yuv_enh->yuv_enh_contrast * 128);
-        msg->contrast_int       = (int)(yuv_enh->yuv_enh_contrast * 128);
-        msg->cos_hue_int        = (int)(cos(yuv_enh->yuv_enh_hue_angle) * 128.0);
-        msg->sin_hue_int        = (int)(sin(yuv_enh->yuv_enh_hue_angle) * 128.0);
-        msg->yuv_enh_brightness = yuv_enh->yuv_enh_brightness >= 0 ? yuv_enh->yuv_enh_brightness : (yuv_enh->yuv_enh_brightness + 64);
+        msg->sat_con_int        =
+            (int)(yuv_enh->yuv_enh_saturation *
+                  yuv_enh->yuv_enh_contrast * 128);
+        msg->contrast_int       =
+            (int)(yuv_enh->yuv_enh_contrast * 128);
+        msg->cos_hue_int        =
+            (int)(cos(yuv_enh->yuv_enh_hue_angle) * 128.0);
+        msg->sin_hue_int        =
+            (int)(sin(yuv_enh->yuv_enh_hue_angle) * 128.0);
+        msg->yuv_enh_brightness =
+            yuv_enh->yuv_enh_brightness >= 0 ?
+            yuv_enh->yuv_enh_brightness : (yuv_enh->yuv_enh_brightness + 64);
 
         msg->video_mode  = yuv_enh->video_mode;
         msg->color_bar_y = yuv_enh->color_bar_y;
@@ -258,7 +311,8 @@ int iep_api::config_color_enh(iep_param_RGB_color_enhance_t *rgb_enh)
         msg->rgb_cg_en = rgb_enh->rgb_cg_en;
 
         msg->enh_threshold = rgb_enh->enh_threshold;
-        msg->enh_alpha     = enh_alpha_table[rgb_enh->enh_alpha_base][rgb_enh->enh_alpha_num];
+        msg->enh_alpha     =
+            enh_alpha_table[rgb_enh->enh_alpha_base][rgb_enh->enh_alpha_num];
         msg->enh_radius    = rgb_enh->enh_radius - 1;
 
         if (rgb_enh->rgb_cg_en) {
@@ -285,7 +339,8 @@ int iep_api::config_color_enh(iep_param_RGB_color_enhance_t *rgb_enh)
                 tab_2 = (unsigned int)cg_2;
                 tab_3 = (unsigned int)cg_3;
 
-                conf_value = (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
+                conf_value =
+                    (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
                 msg->cg_tab[i] = conf_value;
             }
 
@@ -312,7 +367,8 @@ int iep_api::config_color_enh(iep_param_RGB_color_enhance_t *rgb_enh)
                 tab_2 = (unsigned int)cg_2;
                 tab_3 = (unsigned int)cg_3;
 
-                conf_value = (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
+                conf_value =
+                    (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
                 msg->cg_tab[64+i] = conf_value;
             }
 
@@ -339,7 +395,8 @@ int iep_api::config_color_enh(iep_param_RGB_color_enhance_t *rgb_enh)
                 tab_2 = (unsigned int)cg_2;
                 tab_3 = (unsigned int)cg_3;
                 
-                conf_value = (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
+                conf_value =
+                    (tab_3 << 24) + (tab_2 << 16) + (tab_1 << 8) + tab_0;
                 msg->cg_tab[2*64+i] = conf_value;
             }
         }
@@ -388,23 +445,25 @@ int iep_api::config_yuv_denoise()
     return -1;
 }
 
-int iep_api::config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp, iep_img *dst_itemp, iep_img *dst_ftemp)
+int iep_api::config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp,
+                                iep_img *dst_itemp, iep_img *dst_ftemp)
 {
     do {
-        if (0 > yuv_denoise_sanity_check(src_itemp, src_ftemp, dst_itemp, dst_ftemp)) {
+        if (0 > yuv_denoise_sanity_check(src_itemp, src_ftemp,
+                                         dst_itemp, dst_ftemp)) {
             break;
         }
-        
+
         memcpy(&msg->src_itemp, src_itemp, sizeof(iep_img));
         memcpy(&msg->src_ftemp, src_ftemp, sizeof(iep_img));
         memcpy(&msg->dst_itemp, dst_itemp, sizeof(iep_img));
         memcpy(&msg->dst_ftemp, dst_ftemp, sizeof(iep_img));
-        
+
         msg->yuv_3D_denoise_en = 1;
-        
+
         return 0;
     } while (0);
-    
+
     return -1;
 }
 
@@ -460,6 +519,13 @@ int iep_api::config_yuv_dil_src_dst(iep_img *src1, iep_img *dst1)
             memcpy(&msg->dst1, dst1, sizeof(iep_img));
         }
 
+        if (g_mode) {
+            msg->src1.act_w /= 2;
+            msg->dst1.act_w /= 2;
+            msg->src1.x_off = msg->src1.act_w;
+            msg->dst1.x_off = msg->dst1.act_w;
+        }
+
         return 0;
     }
     while (0);
@@ -467,7 +533,8 @@ int iep_api::config_yuv_dil_src_dst(iep_img *src1, iep_img *dst1)
     return -1;
 }
 
-int iep_api::config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1)
+int iep_api::config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil,
+                                    iep_img *src1, iep_img *dst1)
 {
     do {
         if (0 > deinterlace_sanity_check(yuv_dil, src1, dst1)) {
@@ -489,6 +556,13 @@ int iep_api::config_yuv_deinterlace(iep_param_yuv_deinterlace_t *yuv_dil, iep_im
 
         if (dst1 != NULL) {
             memcpy(&msg->dst1, dst1, sizeof(iep_img));
+        }
+
+        if (g_mode) {
+            msg->src1.act_w /= 2;
+            msg->dst1.act_w /= 2;
+            msg->src1.x_off = msg->src1.act_w;
+            msg->dst1.x_off = msg->dst1.act_w;
         }
 
         return 0;
@@ -514,7 +588,8 @@ int iep_api::config_color_space_convertion()
     return 0;
 }
 
-int iep_api::config_color_space_convertion(iep_param_color_space_convertion_t *clr_convert)
+int iep_api::config_color_space_convertion(
+    iep_param_color_space_convertion_t *clr_convert)
 {
     do {
         if (0 > color_space_convertion_sanity_check(clr_convert)) {
@@ -567,6 +642,13 @@ int iep_api::config_src_dst(iep_img *src, iep_img *dst)
         memcpy(&msg->src, src, sizeof(iep_img));
         memcpy(&msg->dst, dst, sizeof(iep_img));
 
+        if (g_mode) {
+            msg->src.act_w /= 2;
+            msg->src.x_off = msg->src.act_w;
+            msg->dst.act_w /= 2;
+            msg->dst.x_off = msg->dst.act_w;
+        }
+
         if ((src->format == IEP_FORMAT_YCbCr_420_P
             || src->format == IEP_FORMAT_YCbCr_420_SP
             || src->format == IEP_FORMAT_YCbCr_422_P
@@ -574,7 +656,8 @@ int iep_api::config_src_dst(iep_img *src, iep_img *dst)
             || src->format == IEP_FORMAT_YCrCb_420_P
             || src->format == IEP_FORMAT_YCrCb_420_SP
             || src->format == IEP_FORMAT_YCrCb_422_P
-            || src->format == IEP_FORMAT_YCrCb_422_SP) && msg->dein_mode == IEP_DEINTERLACE_MODE_DISABLE) {
+            || src->format == IEP_FORMAT_YCrCb_422_SP) &&
+              msg->dein_mode == IEP_DEINTERLACE_MODE_DISABLE) {
             msg->dein_mode = IEP_DEINTERLACE_MODE_BYPASS;
         }
 
@@ -597,6 +680,13 @@ int iep_api::init(iep_img *src, iep_img *dst)
         memcpy(&msg->src, src, sizeof(iep_img));
         memcpy(&msg->dst, dst, sizeof(iep_img));
 
+        if (g_mode) {
+            msg->src.act_w /= 2;
+            msg->src.x_off = msg->src.act_w;
+            msg->dst.act_w /= 2;
+            msg->dst.x_off = msg->dst.act_w;
+        }
+
         if ((src->format == IEP_FORMAT_YCbCr_420_P
             || src->format == IEP_FORMAT_YCbCr_420_SP
             || src->format == IEP_FORMAT_YCbCr_422_P
@@ -604,7 +694,8 @@ int iep_api::init(iep_img *src, iep_img *dst)
             || src->format == IEP_FORMAT_YCrCb_420_P
             || src->format == IEP_FORMAT_YCrCb_420_SP
             || src->format == IEP_FORMAT_YCrCb_422_P
-            || src->format == IEP_FORMAT_YCrCb_422_SP) && msg->dein_mode == IEP_DEINTERLACE_MODE_DISABLE) {
+            || src->format == IEP_FORMAT_YCrCb_422_SP) &&
+            msg->dein_mode == IEP_DEINTERLACE_MODE_DISABLE) {
             msg->dein_mode = IEP_DEINTERLACE_MODE_BYPASS;
         }
 
@@ -615,12 +706,144 @@ int iep_api::init(iep_img *src, iep_img *dst)
     return -1;
 }
 
+void iep_api::recover_image(struct rga_req *req)
+{
+    if (iommu) {
+        req->src.yrgb_addr = msg->src.mem_addr;
+        req->src.uv_addr = msg->src.uv_addr;
+        req->src.v_addr = msg->src.v_addr;
+    } else {
+        req->src.yrgb_addr = 0;
+        req->src.uv_addr  = msg->src.mem_addr;
+        req->src.v_addr   = 0;
+    }
+    req->src.vir_w = msg->src.vir_w;
+    req->src.vir_h = msg->src.vir_h;
+    req->src.format = RK_FORMAT_YCbCr_420_SP;
+    req->src.alpha_swap |= 0;
+
+    req->src.act_w = msg->src.act_w;
+    req->src.act_h = msg->src.act_h;
+    req->src.x_offset = 0;
+    req->src.y_offset = 0;
+
+    if (iommu) {
+        req->dst.yrgb_addr = msg->dst.mem_addr;
+        req->dst.uv_addr  = msg->dst.uv_addr;
+        req->dst.v_addr   = msg->dst.v_addr;
+    } else {
+        req->dst.yrgb_addr = 0;
+        req->dst.uv_addr  = msg->dst.mem_addr;
+        req->dst.v_addr   = 0;
+    }
+    req->dst.vir_w = msg->dst.vir_w;
+    req->dst.vir_h = msg->dst.vir_h;
+    req->dst.format = RK_FORMAT_YCbCr_420_SP;
+    req->clip.xmin = 0;
+    req->clip.xmax = 0;
+    req->clip.ymin = 0;
+    req->clip.ymax = 0;
+    req->dst.alpha_swap |= 0;
+
+    req->dst.act_w = msg->dst.act_w;
+    req->dst.act_h = msg->dst.act_h;
+    req->dst.x_offset = 0;
+    req->dst.y_offset = 0;
+
+    IEP_DEB("src y %x u %x v %x, dst y %x u %x v %x\n",
+            req->src.yrgb_addr, req->src.uv_addr, req->src.v_addr,
+            req->dst.yrgb_addr, req->dst.uv_addr, req->dst.v_addr);
+
+    IEP_DEB("src vir %d x %d, dst vir %d x %d\n", req->src.vir_w,
+            req->src.vir_h, req->dst.vir_w, req->dst.vir_h);
+
+    IEP_DEB("src act %d x %d, offset (%d, %d), dst act %d x %d, offset (%d, %d)\n",
+            req->src.act_w, req->src.act_h, req->src.x_offset, req->src.y_offset,
+            req->dst.act_w, req->dst.act_h, req->dst.x_offset, req->dst.y_offset);
+}
+
+void iep_api::recover_image1(struct rga_req *req)
+{
+    if (iommu) {
+        req->src.yrgb_addr = msg->src.mem_addr;
+        req->src.uv_addr = msg->src.uv_addr;
+        req->src.v_addr = msg->src.v_addr;
+    } else {
+        req->src.yrgb_addr = 0;
+        req->src.uv_addr = msg->src.mem_addr;
+        req->src.v_addr = 0;
+    }
+    req->src.vir_w = msg->src.vir_w;
+    req->src.vir_h = msg->src.vir_h;
+    req->src.format = RK_FORMAT_YCbCr_420_SP;
+    req->src.alpha_swap |= 0;
+
+    req->src.act_w = msg->src.act_w;
+    req->src.act_h = msg->src.act_h;
+    req->src.x_offset = 0;
+    req->src.y_offset = 0;
+
+    if (iommu) {
+        req->dst.yrgb_addr = msg->dst1.mem_addr;
+        req->dst.uv_addr  = msg->dst1.uv_addr;
+        req->dst.v_addr   = msg->dst1.v_addr;
+    } else {
+        req->dst.yrgb_addr = 0;
+        req->dst.uv_addr  = msg->dst1.mem_addr;
+        req->dst.v_addr   = 0;
+    }
+    req->dst.vir_w = msg->dst1.vir_w;
+    req->dst.vir_h = msg->dst1.vir_h;
+    req->dst.format = RK_FORMAT_YCbCr_420_SP;
+    req->clip.xmin = 0;
+    req->clip.xmax = 0;
+    req->clip.ymin = 0;
+    req->clip.ymax = 0;
+    req->dst.alpha_swap |= 0;
+
+    req->dst.act_w = msg->dst1.act_w;
+    req->dst.act_h = msg->dst1.act_h;
+    req->dst.x_offset = 0;
+    req->dst.y_offset = 0;
+}
+
 int iep_api::run_sync()
 {
     do {
+        struct rga_req req;
+
         if (0 > ioctl(fd, IEP_SET_PARAMETER, (void *)msg)) {
             IEP_ERR("ioctl IEP_SET_PARAMETER failure\n");
             break;
+        }
+
+        if (g_mode) {
+            memset(&req, 0, sizeof(struct rga_req));
+
+            recover_image(&req);
+
+            if (iommu) {
+                req.mmu_info.mmu_en = 1;
+                req.mmu_info.mmu_flag = 1 | (1 << 8) | (1 << 10) | (1 << 31);
+            } else {
+                req.mmu_info.mmu_en = 0;
+            }
+            if (0 > ioctl(rga_fd, RGA_BLIT_SYNC, &req)) {
+                IEP_ERR("RGA_BLIT_SYNC failed\n");
+            }
+
+            if (msg->dein_mode == IEP_DEINTERLACE_MODE_I4O2) {
+                recover_image1(&req);
+                if (iommu) {
+                    req.mmu_info.mmu_en = 1;
+                    req.mmu_info.mmu_flag = 1 | (1 << 8) | (1 << 10) | (1 << 31);
+                } else {
+                    req.mmu_info.mmu_en = 0;
+                }
+                if (0 > ioctl(rga_fd, RGA_BLIT_SYNC, &req)) {
+                    IEP_ERR("RGA_BLIT_SYNC failed\n");
+                }
+            }
         }
 
         if (0 > ioctl(fd, IEP_GET_RESULT_SYNC, 0)) {
@@ -1110,6 +1333,16 @@ int iep_ops_init_discrete(void *iep_obj,
     dst.mem_addr = dst_mem_addr;
     dst.uv_addr  = dst_uv_addr;
     dst.v_addr   = dst_v_addr;
+
+    ALOGE("%s, (%d, %d), (%d, %d), (%d, %d), %d, %x, %x, %x\n", __func__,
+          src.act_w, src.act_h, src.x_off, src.y_off,
+          src.vir_w, src.vir_h, src.format,
+          src.mem_addr, src.uv_addr, src.v_addr);
+
+    ALOGE("%s, (%d, %d), (%d, %d), (%d, %d), %d, %x, %x, %x\n", __func__,
+          dst.act_w, dst.act_h, dst.x_off, dst.y_off,
+          dst.vir_w, dst.vir_h, dst.format,
+          dst.mem_addr, dst.uv_addr, dst.v_addr);
 
     return ((iep_interface*)iep_obj)->init(&src, &dst);
 }

@@ -14,6 +14,7 @@
 #define IEP_GET_RESULT_ASYNC _IOW(IEP_IOC_MAGIC, 7, unsigned long)
 #define IEP_SET_PARAMETER _IOW(IEP_IOC_MAGIC, 8, unsigned long)
 #define IEP_RELEASE_CURRENT_TASK _IOW(IEP_IOC_MAGIC, 9, unsigned long)
+#define IEP_GET_IOMMU_STATE _IOR(IEP_IOC_MAGIC,10, unsigned long)
 
 enum {
     yuv2rgb_BT_601_l            = 0x0,     /* BT.601_1 */
@@ -37,11 +38,11 @@ enum {
     dein_mode_I4O1T              = 0x3,
     dein_mode_I2O1B              = 0x4,
     dein_mode_I2O1T              = 0x5,
-    dein_mode_bypass             = 0x6,    
+    dein_mode_bypass             = 0x6,
 };
 
 enum {
-    rgb_enhance_bypass          = 0x0, 
+    rgb_enhance_bypass          = 0x0,
     rgb_enhance_denoise         = 0x1,
     rgb_enhance_detail          = 0x2,
     rgb_enhance_edge            = 0x3,
@@ -49,7 +50,7 @@ enum {
 
 enum
 {
-    rgb_contrast_CC_P_DDE          = 0x0, //cg prior to dde 
+    rgb_contrast_CC_P_DDE          = 0x0, //cg prior to dde
     rgb_contrast_DDE_P_CC          = 0x1, //dde prior to cg
 }; //for rgb_contrast_enhance_mode
 
@@ -61,22 +62,22 @@ enum {
 }; //for video mode
 
 /*
-//          Alpha    Red     Green   Blue  
-{  4, 32, {{32,24,   24,16,  16, 8,  8, 0 }}, GGL_RGBA },   // IEP_FORMAT_ARGB_8888    
-{  4, 32, {{32,24,   8, 0,  16, 8,  24,16 }}, GGL_RGB  },   // IEP_FORMAT_ABGR_8888    
+//          Alpha    Red     Green   Blue
+{  4, 32, {{32,24,   24,16,  16, 8,  8, 0 }}, GGL_RGBA },   // IEP_FORMAT_ARGB_8888
+{  4, 32, {{32,24,   8, 0,  16, 8,  24,16 }}, GGL_RGB  },   // IEP_FORMAT_ABGR_8888
 {  4, 32, {{ 8, 0,  32,24,  24,16,  16, 8 }}, GGL_RGB  },   // IEP_FORMAT_RGBA_8888
 {  4, 32, {{ 8, 0,  16, 8,  24,16,  32,24 }}, GGL_BGRA },   // IEP_FORMAT_BGRA_8888
-{  2, 16, {{ 0, 0,  16,11,  11, 5,   5, 0 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565        
-{  2, 16, {{ 0, 0,   5, 0,  11, 5,  16,11 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565        
+{  2, 16, {{ 0, 0,  16,11,  11, 5,   5, 0 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565
+{  2, 16, {{ 0, 0,   5, 0,  11, 5,  16,11 }}, GGL_RGB  },   // IEP_FORMAT_RGB_565
 */
 enum {
-    IEP_FORMAT_ARGB_8888    = 0x0,    
-    IEP_FORMAT_ABGR_8888    = 0x1,    
-    IEP_FORMAT_RGBA_8888    = 0x2,    
+    IEP_FORMAT_ARGB_8888    = 0x0,
+    IEP_FORMAT_ABGR_8888    = 0x1,
+    IEP_FORMAT_RGBA_8888    = 0x2,
     IEP_FORMAT_BGRA_8888    = 0x3,
     IEP_FORMAT_RGB_565      = 0x4,
     IEP_FORMAT_BGR_565      = 0x5,
-           
+
     IEP_FORMAT_YCbCr_422_SP = 0x10,
     IEP_FORMAT_YCbCr_422_P  = 0x11,
     IEP_FORMAT_YCbCr_420_SP = 0x12,
@@ -93,25 +94,25 @@ typedef struct iep_img {
     int16_t x_off;         // x offset for the vir,word unit
     int16_t y_off;         // y offset for the vir,word unit
 
-    uint16_t vir_w;         //unit :pix 
+    uint16_t vir_w;         //unit :pix
     uint16_t vir_h;         //unit :pix
     uint32_t format;
     uint32_t mem_addr;
     uint32_t uv_addr;
     uint32_t v_addr;
-    
+
     uint8_t rb_swap;//not be used
     uint8_t uv_swap;//not be used
-	
+
     uint8_t alpha_swap;//not be used
 } iep_img;
 
 
 typedef struct IEP_MSG {
-    iep_img src;    // src active window 
+    iep_img src;    // src active window
     iep_img dst;    // src virtual window
 
-    iep_img src1;   
+    iep_img src1;
     iep_img dst1;
 
     iep_img src_itemp;
@@ -147,28 +148,28 @@ typedef struct IEP_MSG {
     int32_t cos_hue_int;
     int32_t sin_hue_int;
     int8_t yuv_enh_brightness;//-32<brightness<31
-    uint8_t video_mode;//0-3  
+    uint8_t video_mode;//0-3
     uint8_t color_bar_y;//0-127
-    uint8_t color_bar_u;//0-127   
-    uint8_t color_bar_v;//0-127   
+    uint8_t color_bar_u;//0-127
+    uint8_t color_bar_v;//0-127
 
-    
+
     uint8_t rgb_enhance_en;//i don't konw what is used
-    
+
     uint8_t rgb_color_enhance_en;//sw_rgb_color_enh_en
     uint32_t rgb_enh_coe;
-    
+
     uint8_t rgb_enhance_mode;//sw_rgb_enh_sel,dde sel
-    
+
     uint8_t rgb_cg_en;//sw_rgb_con_gam_en
     uint32_t cg_tab[192];
-    
+
     uint8_t rgb_contrast_enhance_mode;//sw_con_gam_order;0 cg prior to dde,1 dde prior to cg
 
-    int32_t enh_threshold; 
+    int32_t enh_threshold;
     int32_t enh_alpha;
     int32_t enh_radius;
-    
+
     uint8_t scale_up_mode;
 
     uint8_t field_order;
