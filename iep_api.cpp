@@ -459,6 +459,17 @@ int iep_api::config_yuv_denoise(iep_img *src_itemp, iep_img *src_ftemp,
         memcpy(&msg->dst_itemp, dst_itemp, sizeof(iep_img));
         memcpy(&msg->dst_ftemp, dst_ftemp, sizeof(iep_img));
 
+        if (g_mode) {
+            msg->src_itemp.act_w /= 2;
+            msg->src_ftemp.act_w /= 2;
+            msg->dst_itemp.act_w /= 2;
+            msg->dst_ftemp.act_w /= 2;
+            msg->src_itemp.x_off = msg->src_itemp.act_w;
+            msg->src_ftemp.x_off = msg->src_ftemp.act_w;
+            msg->dst_itemp.x_off = msg->dst_itemp.act_w;
+            msg->dst_ftemp.x_off = msg->dst_ftemp.act_w;
+        }
+
         msg->yuv_3D_denoise_en = 1;
 
         return 0;
