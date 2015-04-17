@@ -177,11 +177,13 @@ iep_api::iep_api()
         IEP_ERR("file open failed\n");
         abort();
     }
+    pid = getpid();
 
     iommu = 0;
     if (0 > ioctl(fd, IEP_GET_IOMMU_STATE, &iommu)) {
-        IEP_ERR("Get iommu state failed\n");
-        abort();
+        IEP_DEB("Get iommu state failed, mismatch library and driver, disable contrast mode\n");
+        g_mode = 0;
+        return;
     }
 
     if (g_mode) {
@@ -191,8 +193,6 @@ iep_api::iep_api()
            abort();
         }
     }
-
-    pid = getpid();
 }
 
 iep_api::~iep_api()
