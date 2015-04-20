@@ -138,7 +138,7 @@ private:
     int deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_img *src1, iep_img *dst1);
     int color_space_convertion_sanity_check(iep_param_color_space_convertion_t *clr_convert);
     int init_sanity_check(iep_img *src, iep_img *dst);
-    void recover_image(struct rga_req *req);
+    void recover_image(struct rga_req *req, iep_img *dst);
     void recover_image1(struct rga_req *req);
 };
 
@@ -717,12 +717,12 @@ int iep_api::init(iep_img *src, iep_img *dst)
     return -1;
 }
 
-void iep_api::recover_image(struct rga_req *req)
+void iep_api::recover_image(struct rga_req *req, iep_img *dst)
 {
     if (iommu) {
         req->src.yrgb_addr = msg->src.mem_addr;
-        req->src.uv_addr = msg->src.uv_addr;
-        req->src.v_addr = msg->src.v_addr;
+        req->src.uv_addr = 0;//msg->src.uv_addr;
+        req->src.v_addr = 0;//msg->src.v_addr;
     } else {
         req->src.yrgb_addr = 0;
         req->src.uv_addr  = msg->src.mem_addr;
@@ -739,25 +739,25 @@ void iep_api::recover_image(struct rga_req *req)
     req->src.y_offset = 0;
 
     if (iommu) {
-        req->dst.yrgb_addr = msg->dst.mem_addr;
-        req->dst.uv_addr  = msg->dst.uv_addr;
-        req->dst.v_addr   = msg->dst.v_addr;
+        req->dst.yrgb_addr = dst->mem_addr;
+        req->dst.uv_addr  = 0;//msg->dst.uv_addr;
+        req->dst.v_addr   = 0;//msg->dst.v_addr;
     } else {
         req->dst.yrgb_addr = 0;
-        req->dst.uv_addr  = msg->dst.mem_addr;
+        req->dst.uv_addr  = dst->mem_addr;
         req->dst.v_addr   = 0;
     }
-    req->dst.vir_w = msg->dst.vir_w;
-    req->dst.vir_h = msg->dst.vir_h;
+    req->dst.vir_w = dst->vir_w;
+    req->dst.vir_h = dst->vir_h;
     req->dst.format = RK_FORMAT_YCbCr_420_SP;
     req->clip.xmin = 0;
-    req->clip.xmax = 0;
+    req->clip.xmax = dst->vir_w - 1;
     req->clip.ymin = 0;
-    req->clip.ymax = 0;
+    req->clip.ymax = dst->vir_h - 1;
     req->dst.alpha_swap |= 0;
 
-    req->dst.act_w = msg->dst.act_w;
-    req->dst.act_h = msg->dst.act_h;
+    req->dst.act_w = dst->act_w;
+    req->dst.act_h = dst->act_h;
     req->dst.x_offset = 0;
     req->dst.y_offset = 0;
 
@@ -773,51 +773,6 @@ void iep_api::recover_image(struct rga_req *req)
             req->dst.act_w, req->dst.act_h, req->dst.x_offset, req->dst.y_offset);
 }
 
-void iep_api::recover_image1(struct rga_req *req)
-{
-    if (iommu) {
-        req->src.yrgb_addr = msg->src.mem_addr;
-        req->src.uv_addr = msg->src.uv_addr;
-        req->src.v_addr = msg->src.v_addr;
-    } else {
-        req->src.yrgb_addr = 0;
-        req->src.uv_addr = msg->src.mem_addr;
-        req->src.v_addr = 0;
-    }
-    req->src.vir_w = msg->src.vir_w;
-    req->src.vir_h = msg->src.vir_h;
-    req->src.format = RK_FORMAT_YCbCr_420_SP;
-    req->src.alpha_swap |= 0;
-
-    req->src.act_w = msg->src.act_w;
-    req->src.act_h = msg->src.act_h;
-    req->src.x_offset = 0;
-    req->src.y_offset = 0;
-
-    if (iommu) {
-        req->dst.yrgb_addr = msg->dst1.mem_addr;
-        req->dst.uv_addr  = msg->dst1.uv_addr;
-        req->dst.v_addr   = msg->dst1.v_addr;
-    } else {
-        req->dst.yrgb_addr = 0;
-        req->dst.uv_addr  = msg->dst1.mem_addr;
-        req->dst.v_addr   = 0;
-    }
-    req->dst.vir_w = msg->dst1.vir_w;
-    req->dst.vir_h = msg->dst1.vir_h;
-    req->dst.format = RK_FORMAT_YCbCr_420_SP;
-    req->clip.xmin = 0;
-    req->clip.xmax = 0;
-    req->clip.ymin = 0;
-    req->clip.ymax = 0;
-    req->dst.alpha_swap |= 0;
-
-    req->dst.act_w = msg->dst1.act_w;
-    req->dst.act_h = msg->dst1.act_h;
-    req->dst.x_offset = 0;
-    req->dst.y_offset = 0;
-}
-
 int iep_api::run_sync()
 {
     do {
@@ -831,7 +786,7 @@ int iep_api::run_sync()
         if (g_mode) {
             memset(&req, 0, sizeof(struct rga_req));
 
-            recover_image(&req);
+            recover_image(&req, &msg->dst);
 
             if (iommu) {
                 req.mmu_info.mmu_en = 1;
@@ -844,7 +799,8 @@ int iep_api::run_sync()
             }
 
             if (msg->dein_mode == IEP_DEINTERLACE_MODE_I4O2) {
-                recover_image1(&req);
+                memset(&req, 0, sizeof(struct rga_req));
+                recover_image(&req, &msg->dst1);
                 if (iommu) {
                     req.mmu_info.mmu_en = 1;
                     req.mmu_info.mmu_flag = 1 | (1 << 8) | (1 << 10) | (1 << 31);
@@ -1119,7 +1075,7 @@ int iep_api::dil_src_dst_sanity_check(iep_img *src1, iep_img *dst1)
             if (dst1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
+            } else if (!g_mode && dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
                 IEP_ERR("Invalidate parameter, contradiction between two destination image size!\n");
                 goto err;
             }
@@ -1127,7 +1083,7 @@ int iep_api::dil_src_dst_sanity_check(iep_img *src1, iep_img *dst1)
             if (src1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
+            } else if (!g_mode && src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
                 IEP_ERR("Invalidate parameter, contradiction between two source image size!\n");
                 goto err;
             }
@@ -1166,7 +1122,7 @@ int iep_api::deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_
             if (dst1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
+            } else if (!g_mode && dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
                 IEP_ERR("Invalidate parameter, contradiction between two destination image size!\n");
                 goto err;
             }
@@ -1174,7 +1130,7 @@ int iep_api::deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_
             if (src1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
+            } else if (!g_mode && src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
                 IEP_ERR("Invalidate parameter, contradiction between two source image size!\n");
                 goto err;
             }
