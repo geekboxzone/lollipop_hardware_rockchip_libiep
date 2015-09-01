@@ -309,6 +309,7 @@ int iep_api::config_color_enh(iep_param_RGB_color_enhance_t *rgb_enh)
         msg->rgb_enh_coe = (unsigned int)(rgb_enh->rgb_enh_coe * 32);
         msg->rgb_contrast_enhance_mode = rgb_enh->rgb_contrast_enhance_mode;
         msg->rgb_cg_en = rgb_enh->rgb_cg_en;
+	msg->rgb_enhance_mode = rgb_enh->rgb_enhance_mode;
 
         msg->enh_threshold = rgb_enh->enh_threshold;
         msg->enh_alpha     =
@@ -1203,7 +1204,7 @@ int iep_api::init_sanity_check(iep_img *src, iep_img *dst)
             break;
         }
 
-        if (src->act_w > 1920 || src->act_h > 8192) {
+        if (src->act_w > 4096 || src->act_h > 8192) {
             IEP_ERR("Invalidate parameter, source image size!\n");
             break;
         }
