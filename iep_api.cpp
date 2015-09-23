@@ -126,6 +126,9 @@ public:
     virtual int run_sync();
     virtual int run_async(iep_notify notify);
     virtual int poll();
+    virtual struct IEP_CAP* query();
+    virtual IEP_QUERY_INTERLACE query_interlace();
+    virtual IEP_QUERY_DIMENSION query_dimension();
 
 private:
     static void* notify_func(void *param);
@@ -145,6 +148,7 @@ private:
 static int g_mode = 0;
 static int g_log_level = 0;
 static pthread_once_t g_get_env_value_once = PTHREAD_ONCE_INIT;
+static struct IEP_CAP cap;
 
 static void get_env_value()
 {
@@ -162,7 +166,7 @@ iep_api::iep_api()
     //pthread_once(&g_get_env_value_once, get_env_value);
     get_env_value();
 
-    ALOGE("g_mode %d, g_log_level %d\n", g_mode, g_log_level);
+    ALOGD("g_mode %d, g_log_level %d\n", g_mode, g_log_level);
 
     msg = new IEP_MSG();
     if (msg == NULL) {
@@ -179,11 +183,28 @@ iep_api::iep_api()
     }
     pid = getpid();
 
+    IEP_DEB("query capabilities\n");
+    if (0 > ioctl(fd, IEP_QUERY_CAP, &cap)) {
+        IEP_DEB("Query IEP capability failed, using default cap\n");
+        cap.scaling_supported = 0;
+        cap.i4_deinterlace_supported = 1;
+        cap.i2_deinterlace_supported = 1;
+        cap.compression_noise_reduction_supported = 1;
+        cap.sampling_noise_reduction_supported = 1;
+        cap.hsb_enhancement_supported = 1;
+        cap.cg_enhancement_supported = 1;
+        cap.direct_path_supported = 1;
+        cap.max_dynamic_width = 1920;
+        cap.max_dynamic_height = 1088;
+        cap.max_static_width = 8192;
+        cap.max_static_height = 8192;
+        cap.max_enhance_radius = 3;
+    }
+
     iommu = 0;
     if (0 > ioctl(fd, IEP_GET_IOMMU_STATE, &iommu)) {
         IEP_DEB("Get iommu state failed, mismatch library and driver, disable contrast mode\n");
         g_mode = 0;
-        return;
     }
 
     if (g_mode) {
@@ -1076,7 +1097,7 @@ int iep_api::dil_src_dst_sanity_check(iep_img *src1, iep_img *dst1)
             if (dst1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (!g_mode && dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
+            } else if (!g_mode && (dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h)) {
                 IEP_ERR("Invalidate parameter, contradiction between two destination image size!\n");
                 goto err;
             }
@@ -1084,7 +1105,7 @@ int iep_api::dil_src_dst_sanity_check(iep_img *src1, iep_img *dst1)
             if (src1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (!g_mode && src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
+            } else if (!g_mode && (src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h)) {
                 IEP_ERR("Invalidate parameter, contradiction between two source image size!\n");
                 goto err;
             }
@@ -1123,7 +1144,7 @@ int iep_api::deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_
             if (dst1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (!g_mode && dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h) {
+            } else if (!g_mode && (dst1->act_w != msg->dst.act_w || dst1->act_h != msg->dst.act_h)) {
                 IEP_ERR("Invalidate parameter, contradiction between two destination image size!\n");
                 goto err;
             }
@@ -1131,7 +1152,7 @@ int iep_api::deinterlace_sanity_check(iep_param_yuv_deinterlace_t *yuv_dil, iep_
             if (src1 == NULL) {
                 IEP_ERR("Invalidate parameter!\n");
                 goto err;
-            } else if (!g_mode && src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h) {
+            } else if (!g_mode && (src1->act_w != msg->src.act_w || src1->act_h != msg->src.act_h)) {
                 IEP_ERR("Invalidate parameter, contradiction between two source image size!\n");
                 goto err;
             }
@@ -1227,6 +1248,31 @@ int iep_api::init_sanity_check(iep_img *src, iep_img *dst)
     while (0);
 
     return -1;
+}
+
+struct IEP_CAP* iep_api::query()
+{
+    return &cap;
+}
+
+IEP_QUERY_INTERLACE iep_api::query_interlace()
+{
+    if (cap.i4_deinterlace_supported) {
+        return IEP_QUERY_INTERLACE_FULL_FUNC;
+    } else if (cap.i2_deinterlace_supported) {
+        return IEP_QUERY_INTERLACE_I2O1_ONLY;
+    } else {
+        return IEP_QUERY_INTERLACE_UNSUPPORTED;
+    }
+}
+
+IEP_QUERY_DIMENSION iep_api::query_dimension()
+{
+    if (cap.max_dynamic_width > 1920) {
+        return IEP_QUERY_DIMENSION_4096;
+    } else {
+        return IEP_QUERY_DIMENSION_1920;
+    }
 }
 
 iep_interface* iep_interface::create_new() 

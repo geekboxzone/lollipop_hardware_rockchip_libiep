@@ -3,6 +3,24 @@
 
 #include <sys/ioctl.h>
 
+/* Capability for current iep version
+using by userspace to determine iep features */
+struct IEP_CAP {
+    uint8_t scaling_supported;
+    uint8_t i4_deinterlace_supported;
+    uint8_t i2_deinterlace_supported;
+    uint8_t compression_noise_reduction_supported;
+    uint8_t sampling_noise_reduction_supported;
+    uint8_t hsb_enhancement_supported;
+    uint8_t cg_enhancement_supported;
+    uint8_t direct_path_supported;
+    uint16_t max_dynamic_width;
+    uint16_t max_dynamic_height;
+    uint16_t max_static_width;
+    uint16_t max_static_height;
+    uint8_t max_enhance_radius;
+};
+
 #define IEP_IOC_MAGIC 'i'
 
 #define IEP_SET_PARAMETER_REQ _IOW(IEP_IOC_MAGIC, 1, unsigned long)
@@ -15,6 +33,7 @@
 #define IEP_SET_PARAMETER _IOW(IEP_IOC_MAGIC, 8, unsigned long)
 #define IEP_RELEASE_CURRENT_TASK _IOW(IEP_IOC_MAGIC, 9, unsigned long)
 #define IEP_GET_IOMMU_STATE _IOR(IEP_IOC_MAGIC,10, unsigned long)
+#define IEP_QUERY_CAP _IOR(IEP_IOC_MAGIC, 11, struct IEP_CAP)
 
 enum {
     yuv2rgb_BT_601_l            = 0x0,     /* BT.601_1 */

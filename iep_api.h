@@ -119,6 +119,17 @@ typedef struct iep_param_direct_path_interface {
     uint8_t                         layer;
 } iep_param_direct_path_interface_t;
 
+typedef enum IEP_QUERY_INTERLACE {
+    IEP_QUERY_INTERLACE_UNSUPPORTED,
+    IEP_QUERY_INTERLACE_I2O1_ONLY,
+    IEP_QUERY_INTERLACE_FULL_FUNC
+} IEP_QUERY_INTERLACE;
+
+typedef enum IEP_QUERY_DIMENSION {
+    IEP_QUERY_DIMENSION_1920,
+    IEP_QUERY_DIMENSION_4096
+} IEP_QUERY_DIMENSION;
+
 typedef void (*iep_notify)(int result);
 
 class iep_interface {
@@ -145,7 +156,10 @@ public:
     virtual int run_sync() = 0;
     virtual int run_async(iep_notify notify) = 0;
     virtual int poll() = 0;
-
+    virtual struct IEP_CAP* query() = 0;
+    virtual IEP_QUERY_INTERLACE query_interlace() = 0;
+    virtual IEP_QUERY_DIMENSION query_dimension() = 0;
+    
     static iep_interface* create_new();
     static void reclaim(iep_interface *iep_inf);
 };
