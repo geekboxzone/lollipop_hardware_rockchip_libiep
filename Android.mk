@@ -48,4 +48,4 @@ LOCAL_MODULE := iep_func_test
 LOCAL_MODULE_TAGS := optional tests
 LOCAL_PRELINK_MODULE := false
 
-include $(BUILD_EXECUTABLE)
+#include $(BUILD_EXECUTABLE)

@@ -161,7 +161,7 @@ static void get_env_value()
         g_log_level = atoi(prop_value);
 }
 
-iep_api::iep_api()
+iep_api::iep_api() : rga_fd(-1)
 {
     //pthread_once(&g_get_env_value_once, get_env_value);
     get_env_value();
